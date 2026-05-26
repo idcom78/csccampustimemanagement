@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A1628">
+<title>CSC Campus — Time Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:     #0A1628;
+  --navy2:    #0D1F3C;
+  --navy3:    #152B52;
+  --navy4:    #1E3A6E;
+  --gold:     #F9A825;
+  --gold2:    #FFD54F;
+  --gold3:    #FFF8E1;
+  --blue:     #1565C0;
+  --blue2:    #1976D2;
+  --blue3:    #42A5F5;
+  --green:    #00C853;
+  --green2:   #1B5E20;
+  --red:      #FF5252;
+  --orange:   #FF6D00;
+  --purple:   #7C4DFF;
+  --card:     #0F1F3D;
+  --card2:    #162843;
+  --border:   rgba(249,168,37,0.15);
+  --text1:    #FFFFFF;
+  --text2:    #B0C4DE;
+  --text3:    #607D9B;
+  --font:     'Nunito', sans-serif;
+  --font2:    'Baloo 2', sans-serif;
+  --radius:   16px;
+  --radius2:  12px;
+  --shadow:   0 4px 24px rgba(0,0,0,0.4);
+  --gold-glow:0 0 20px rgba(249,168,37,0.3);
+  --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; background:var(--navy); font-family:var(--font); color:var(--text1); }
+
+/* ─── APP SHELL ─────────────────────────────────────────── */
+#app { display:flex; flex-direction:column; height:100dvh; height:100vh; max-width:480px; margin:0 auto; position:relative; background:var(--navy); overflow:hidden; }
+#app::before { content:''; position:fixed; top:-100px; right:-60px; width:300px; height:300px; background:radial-gradient(circle, rgba(249,168,37,0.06) 0%, transparent 70%); pointer-events:none; z-index:0; }
+
+/* ─── TOP BAR ────────────────────────────────────────────── */
+#topbar { padding:12px 16px 8px; background:var(--navy2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; z-index:10; position:relative; }
+.brand { display:flex; align-items:center; gap:8px; }
+.brand-logo { width:32px; height:32px; background:linear-gradient(135deg,var(--gold),var(--gold2)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font2); font-weight:800; font-size:14px; color:var(--navy); }
+.brand-text { display:flex; flex-direction:column; }
+.brand-name { font-family:var(--font2); font-weight:800; font-size:15px; color:var(--text1); line-height:1.1; }
+.brand-sub { font-size:9px; color:var(--gold); letter-spacing:0.5px; font-weight:600; }
+.topbar-right { text-align:right; }
+.live-time { font-family:var(--font2); font-weight:700; font-size:18px; color:var(--gold); line-height:1; }
+.live-date { font-size:9px; color:var(--text2); font-weight:600; margin-top:2px; }
+
+/* ─── PAGES ──────────────────────────────────────────────── */
+#pages { flex:1; overflow:hidden; position:relative; }
+.page { position:absolute; inset:0; overflow-y:auto; padding:16px 14px 20px; display:none; opacity:0; transform:translateY(8px); transition:var(--transition); scroll-behavior:smooth; }
+.page.active { display:block; opacity:1; transform:translateY(0); }
+.page::-webkit-scrollbar { width:3px; }
+.page::-webkit-scrollbar-track { background:transparent; }
+.page::-webkit-scrollbar-thumb { background:var(--navy4); border-radius:2px; }
+
+/* ─── BOTTOM NAV ─────────────────────────────────────────── */
+#navbar { background:var(--navy2); border-top:1px solid var(--border); padding:8px 0 max(8px,env(safe-area-inset-bottom)); display:flex; flex-shrink:0; z-index:100; position:relative; }
+.nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 0; cursor:pointer; border:none; background:none; color:var(--text3); transition:var(--transition); position:relative; }
+.nav-btn.active { color:var(--gold); }
+.nav-btn.active .nav-icon { background:rgba(249,168,37,0.12); }
+.nav-icon { width:36px; height:28px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; transition:var(--transition); }
+.nav-btn.active .nav-icon { transform:scale(1.1); }
+.nav-label { font-size:10px; font-weight:700; letter-spacing:0.3px; }
+
+/* ─── CARDS ──────────────────────────────────────────────── */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px; position:relative; overflow:hidden; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--gold),var(--blue3)); opacity:0; transition:var(--transition); }
+.card:hover::before { opacity:1; }
+.card-gold { border-color:rgba(249,168,37,0.3); background:linear-gradient(135deg,var(--card) 0%,rgba(249,168,37,0.05) 100%); }
+.card-blue { border-color:rgba(66,165,245,0.25); background:linear-gradient(135deg,var(--card) 0%,rgba(21,101,192,0.08) 100%); }
+.card-green { border-color:rgba(0,200,83,0.2); background:linear-gradient(135deg,var(--card) 0%,rgba(0,200,83,0.05) 100%); }
+
+/* ─── SECTION HEADERS ────────────────────────────────────── */
+.sec-hdr { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.sec-hdr-line { flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+.sec-title { font-family:var(--font2); font-weight:700; font-size:13px; color:var(--gold); text-transform:uppercase; letter-spacing:1px; white-space:nowrap; }
+.sec-icon { font-size:16px; }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border-radius:var(--radius2); font-family:var(--font); font-weight:700; font-size:13px; cursor:pointer; border:none; transition:var(--transition); }
+.btn-gold { background:linear-gradient(135deg,var(--gold),#FFAB00); color:var(--navy); box-shadow:0 4px 16px rgba(249,168,37,0.3); }
+.btn-gold:active { transform:scale(0.96); }
+.btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text2); }
+.btn-outline:active { background:rgba(255,255,255,0.05); }
+.btn-red { background:rgba(255,82,82,0.15); border:1px solid rgba(255,82,82,0.3); color:var(--red); }
+.btn-sm { padding:6px 12px; font-size:12px; border-radius:8px; }
+.btn-full { width:100%; justify-content:center; }
+
+/* ─── INPUTS ─────────────────────────────────────────────── */
+.inp { width:100%; background:var(--card2); border:1.5px solid var(--border); border-radius:var(--radius2); padding:10px 12px; font-family:var(--font); font-size:13px; color:var(--text1); transition:var(--transition); outline:none; }
+.inp:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(249,168,37,0.1); }
+.inp::placeholder { color:var(--text3); }
+select.inp { cursor:pointer; }
+.inp-group { margin-bottom:10px; }
+.inp-label { font-size:11px; font-weight:700; color:var(--text2); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+
+/* ─── BADGES / TAGS ──────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+.badge-gold { background:rgba(249,168,37,0.15); color:var(--gold); border:1px solid rgba(249,168,37,0.25); }
+.badge-blue { background:rgba(66,165,245,0.12); color:var(--blue3); border:1px solid rgba(66,165,245,0.2); }
+.badge-green { background:rgba(0,200,83,0.12); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.badge-red { background:rgba(255,82,82,0.12); color:var(--red); border:1px solid rgba(255,82,82,0.2); }
+.badge-purple { background:rgba(124,77,255,0.12); color:var(--purple); border:1px solid rgba(124,77,255,0.2); }
+
+/* ─── PROGRESS BAR ───────────────────────────────────────── */
+.prog-track { background:rgba(255,255,255,0.08); border-radius:999px; overflow:hidden; }
+.prog-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--gold),var(--gold2)); transition:width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.prog-green .prog-bar { background:linear-gradient(90deg,#00C853,#69F0AE); }
+.prog-blue .prog-bar { background:linear-gradient(90deg,var(--blue),var(--blue3)); }
+.prog-purple .prog-bar { background:linear-gradient(90deg,#7C4DFF,#B388FF); }
+
+/* ─── CHECKBOX ───────────────────────────────────────────── */
+.check-wrap { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:var(--card2); border-radius:var(--radius2); border:1px solid var(--border); margin-bottom:8px; cursor:pointer; transition:var(--transition); }
+.check-wrap:active { background:var(--card); }
+.check-wrap.done { opacity:0.5; }
+.custom-check { width:20px; height:20px; border-radius:6px; border:2px solid var(--navy4); background:transparent; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; transition:var(--transition); }
+.check-wrap.done .custom-check { background:var(--green); border-color:var(--green); }
+.check-wrap.done .check-task { text-decoration:line-through; color:var(--text3); }
+.check-mark { font-size:12px; color:white; display:none; }
+.check-wrap.done .check-mark { display:block; }
+.check-body { flex:1; }
+.check-task { font-size:13px; font-weight:600; color:var(--text1); margin-bottom:3px; }
+.check-meta { font-size:11px; color:var(--text3); display:flex; gap:8px; }
+
+/* ─── TIMETABLE ──────────────────────────────────────────── */
+.tt-grid { display:grid; grid-template-columns:56px 1fr; gap:0; }
+.tt-time { font-size:11px; color:var(--text3); font-weight:600; padding:8px 6px 8px 0; border-right:1.5px solid var(--border); text-align:right; }
+.tt-slot { padding:6px 0 6px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.tt-item { background:var(--card2); border-left:3px solid var(--gold); border-radius:0 8px 8px 0; padding:6px 10px; cursor:pointer; transition:var(--transition); }
+.tt-item:active { opacity:0.8; }
+.tt-item.blue { border-left-color:var(--blue3); }
+.tt-item.green { border-left-color:var(--green); }
+.tt-item.purple { border-left-color:var(--purple); }
+.tt-item.red { border-left-color:var(--red); }
+.tt-name { font-size:12px; font-weight:700; color:var(--text1); }
+.tt-sub { font-size:10px; color:var(--text3); margin-top:1px; }
+.tt-empty { font-size:11px; color:var(--text3); padding:4px 8px; }
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:500; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; backdrop-filter:blur(4px); }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:var(--navy2); border-radius:24px 24px 0 0; border-top:1px solid var(--border); width:100%; max-width:480px; padding:20px 16px 32px; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); max-height:90vh; overflow-y:auto; }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-handle { width:36px; height:4px; background:var(--navy4); border-radius:2px; margin:0 auto 16px; }
+.modal-title { font-family:var(--font2); font-weight:800; font-size:16px; color:var(--text1); margin-bottom:16px; }
+
+/* ─── HOME SPECIFIC ──────────────────────────────────────── */
+.hero-card { background:linear-gradient(135deg,var(--navy3) 0%,var(--navy4) 100%); border:1px solid rgba(249,168,37,0.2); border-radius:20px; padding:16px; margin-bottom:14px; position:relative; overflow:hidden; }
+.hero-card::after { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle,rgba(249,168,37,0.12),transparent 70%); }
+.hero-greeting { font-size:12px; color:var(--text2); font-weight:600; }
+.hero-name { font-family:var(--font2); font-weight:800; font-size:20px; color:var(--text1); margin:2px 0 8px; }
+.hero-quote { font-size:11px; color:var(--gold); font-style:italic; font-weight:600; line-height:1.4; border-left:2px solid var(--gold); padding-left:8px; margin-top:8px; }
+.stat-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius2); padding:12px; text-align:center; }
+.stat-val { font-family:var(--font2); font-weight:800; font-size:22px; color:var(--gold); line-height:1; }
+.stat-lbl { font-size:10px; color:var(--text3); font-weight:600; margin-top:3px; text-transform:uppercase; letter-spacing:0.5px; }
+.today-strip { background:linear-gradient(135deg,rgba(21,101,192,0.15),rgba(66,165,245,0.05)); border:1px solid rgba(66,165,245,0.2); border-radius:var(--radius2); padding:10px 12px; display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer; }
+.ts-icon { font-size:22px; }
+.ts-text { flex:1; }
+.ts-title { font-size:13px; font-weight:700; color:var(--text1); }
+.ts-sub { font-size:11px; color:var(--text3); }
+.ts-arrow { color:var(--text3); font-size:14px; }
+
+/* ─── PROGRESS PAGE ──────────────────────────────────────── */
+.sub-prog-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.sub-prog-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.sub-prog-body { flex:1; }
+.sub-prog-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.sub-prog-name { font-size:13px; font-weight:700; color:var(--text1); }
+.sub-prog-pct { font-size:12px; font-weight:700; color:var(--gold); }
+
+/* ─── SETTINGS ───────────────────────────────────────────── */
+.set-item { display:flex; align-items:center; gap:12px; padding:12px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius2); margin-bottom:8px; cursor:pointer; transition:var(--transition); }
+.set-item:active { background:var(--card2); }
+.set-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.set-body { flex:1; }
+.set-title { font-size:13px; font-weight:700; color:var(--text1); }
+.set-sub { font-size:11px; color:var(--text3); margin-top:1px; }
+.set-arrow { color:var(--text3); font-size:14px; }
+.toggle-wrap { display:flex; align-items:center; }
+.toggle { width:42px; height:24px; background:var(--navy4); border-radius:12px; position:relative; cursor:pointer; transition:var(--transition); border:none; }
+.toggle.on { background:var(--green); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:white; transition:var(--transition); }
+.toggle.on::after { left:21px; }
+
+/* ─── STREAK DISPLAY ─────────────────────────────────────── */
+.streak-dots { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.streak-dot { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--text3); background:var(--navy4); }
+.streak-dot.done { background:linear-gradient(135deg,var(--gold),var(--gold2)); color:var(--navy); }
+.streak-dot.today { background:var(--blue); color:white; border:2px solid var(--blue3); }
+
+/* ─── TIMER ──────────────────────────────────────────────── */
+.timer-display { font-family:var(--font2); font-size:52px; font-weight:800; color:var(--gold); text-align:center; letter-spacing:2px; text-shadow:var(--gold-glow); margin:16px 0; }
+.timer-subject { text-align:center; font-size:13px; color:var(--text2); font-weight:600; margin-bottom:8px; }
+.timer-btns { display:flex; gap:8px; justify-content:center; }
+
+/* ─── WEEK TABS ──────────────────────────────────────────── */
+.week-tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none; }
+.week-tabs::-webkit-scrollbar { display:none; }
+.week-tab { flex-shrink:0; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; transition:var(--transition); border:1.5px solid var(--border); color:var(--text3); background:transparent; }
+.week-tab.active { background:var(--gold); color:var(--navy); border-color:var(--gold); }
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+.toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--navy3); border:1px solid var(--border); border-radius:999px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--text1); z-index:600; opacity:0; transition:all 0.3s; white-space:nowrap; box-shadow:var(--shadow); max-width:90vw; text-align:center; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:rgba(0,200,83,0.4); color:var(--green); }
+.toast.error { border-color:rgba(255,82,82,0.4); color:var(--red); }
+
+/* ─── UTIL ───────────────────────────────────────────────── */
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.flex-center { display:flex; align-items:center; justify-content:center; }
+.gap-8 { gap:8px; }
+.mt-4 { margin-top:4px; }
+.mt-8 { margin-top:8px; }
+.mt-12 { margin-top:12px; }
+.mb-8 { margin-bottom:8px; }
+.row-btns { display:flex; gap:8px; }
+.divider { height:1px; background:var(--border); margin:12px 0; }
+.empty-state { text-align:center; padding:32px 16px; }
+.empty-icon { font-size:40px; margin-bottom:8px; opacity:0.4; }
+.empty-text { font-size:13px; color:var(--text3); font-weight:600; }
+
+/* Animations */
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+.anim-in { animation:fadeIn 0.35s ease forwards; }
+.pulse { animation:pulse 2s infinite; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="brand-logo">CSC</div>
+      <div class="brand-text">
+        <div class="brand-name">CSC Campus</div>
+        <div class="brand-sub">SELECTION SHURU HOTA HAI YAHAN SE!</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-time" id="liveClock">--:--</div>
+      <div class="live-date" id="liveDate">--</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div id="pages">
+
+    <!-- ═══ HOME ═══ -->
+    <div class="page active" id="page-home">
+      <div class="hero-card anim-in">
+        <div class="hero-greeting">🌟 Jai Hind! Aaj ka din:</div>
+        <div class="hero-name" id="heroName">Student</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <span class="badge badge-gold" id="heroBadge">SSC CGL</span>
+          <span class="badge badge-blue" id="heroExam">Target: 2025</span>
+        </div>
+        <div class="hero-quote" id="heroQuote">"Discipline aaj, Selection kal!"</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card card-gold">
+          <div class="stat-val" id="todayHrs">0h</div>
+          <div class="stat-lbl">Aaj Padha</div>
+        </div>
+        <div class="stat-card card-blue">
+          <div class="stat-val" id="weekHrs">0h</div>
+          <div class="stat-lbl">Is Hafte</div>
+        </div>
+        <div class="stat-card card-green" style="grid-column:span 2;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="stat-val" id="streakCount">0 🔥</div>
+              <div class="stat-lbl">Din Streak</div>
+            </div>
+            <div class="streak-dots" id="weekStreak"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Tasks Quick View -->
+      <div class="sec-hdr">
+        <div class="sec-icon">📋</div>
+        <div class="sec-title">Aaj ke Tasks</div>
+        <div class="sec-hdr-line"></div>
+        <button class="btn btn-gold btn-sm" onclick="addTaskModal()">+ Add</button>
+      </div>
+      <div id="homeTasks"></div>
+
+      <!-- Next Session -->
+      <div class="sec-hdr" style="margin-top:4px;">
+        <div class="sec-icon">⏰</div>
+        <div class="sec-title">Next Session</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+      <div id="nextSession">
+        <div class="card card-blue">
+          <div class="flex-between">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text1);">Schedule set karein</div>
+              <div style="font-size:11px;color:var(--text3);">Schedule tab mein jaakar apna timetable banayein</div>
+            </div>
+            <div style="font-size:24px;">📅</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Study Timer -->
+      <div class="sec-hdr">
+        <div class="sec-icon">⏱️</div>
+        <div class="sec-title">Study Timer</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+      <div class="card card-gold">
+        <div class="timer-subject" id="timerSubject">Subject select karein</div>
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="inp-group" style="margin-bottom:10px;">
+          <select class="inp" id="timerSubjectSelect" onchange="updateTimerSubject()">
+            <option value="">-- Subject Select Karein --</option>
+          </select>
+        </div>
+        <div class="timer-btns">
+          <button class="btn btn-gold" id="timerStartBtn" onclick="toggleTimer()">▶ Start</button>
+          <button class="btn btn-outline" onclick="resetTimer()">↺ Reset</button>
+          <button class="btn btn-outline btn-sm" onclick="saveStudySession()" id="timerSaveBtn" style="display:none;">💾 Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCHEDULE ═══ -->
+    <div class="page" id="page-schedule">
+      <div class="sec-hdr">
+        <div class="sec-icon">📅</div>
+        <div class="sec-title">Weekly Timetable</div>
+        <div class="sec-hdr-line"></div>
+        <button class="btn btn-gold btn-sm" onclick="addSlotModal()">+ Add</button>
+      </div>
+      <div class="week-tabs" id="dayTabs"></div>
+      <div id="scheduleView"></div>
+    </div>
+
+    <!-- ═══ TASKS ═══ -->
+    <div class="page" id="page-tasks">
+      <div class="sec-hdr">
+        <div class="sec-icon">✅</div>
+        <div class="sec-title">Aaj ke Tasks</div>
+        <div class="sec-hdr-line"></div>
+        <button class="btn btn-gold btn-sm" onclick="addTaskModal()">+ Add</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;">
+        <button class="week-tab active" id="fAll" onclick="filterTasks('all',this)">Sabhi</button>
+        <button class="week-tab" id="fPending" onclick="filterTasks('pending',this)">Pending</button>
+        <button class="week-tab" id="fDone" onclick="filterTasks('done',this)">Done ✅</button>
+        <button class="week-tab" id="fHigh" onclick="filterTasks('high',this)">🔴 High</button>
+      </div>
+      <div id="tasksView"></div>
+
+      <div class="divider"></div>
+      <div class="sec-hdr">
+        <div class="sec-icon">📚</div>
+        <div class="sec-title">Subjects Manage Karein</div>
+        <div class="sec-hdr-line"></div>
+        <button class="btn btn-outline btn-sm" onclick="subjectModal()">⚙</button>
+      </div>
+      <div id="subjectsChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- ═══ PROGRESS ═══ -->
+    <div class="page" id="page-progress">
+      <div class="sec-hdr">
+        <div class="sec-icon">📊</div>
+        <div class="sec-title">Progress Dashboard</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+
+      <!-- Overall Stats -->
+      <div class="card card-gold">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px;">📈 IS HAFTE KA PERFORMANCE</div>
+        <div class="stat-row" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0;">
+          <div style="text-align:center;">
+            <div class="stat-val" id="pWeekHrs" style="font-size:18px;">0h</div>
+            <div class="stat-lbl">Padha</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="stat-val" style="font-size:18px;color:var(--green);" id="pTaskDone">0</div>
+            <div class="stat-lbl">Tasks Done</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="stat-val" style="font-size:18px;color:var(--blue3);" id="pStreak">0🔥</div>
+            <div class="stat-lbl">Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily goal -->
+      <div class="card card-blue">
+        <div class="flex-between mb-8">
+          <div style="font-size:13px;font-weight:700;">🎯 Aaj ka Goal</div>
+          <div style="font-size:12px;color:var(--gold);" id="goalPct">0%</div>
+        </div>
+        <div class="prog-track" style="height:10px;">
+          <div class="prog-bar" id="goalBar" style="width:0%;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="goalText">Target: 0h padhna hai aaj</div>
+      </div>
+
+      <!-- Subject-wise -->
+      <div class="sec-hdr">
+        <div class="sec-icon">📚</div>
+        <div class="sec-title">Subject-wise Padhai</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+      <div class="card" id="subjectProgress"></div>
+
+      <!-- Last 7 days log -->
+      <div class="sec-hdr">
+        <div class="sec-icon">🗓</div>
+        <div class="sec-title">Last 7 Days</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+      <div id="weekChart" style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:12px;padding:0 4px;"></div>
+
+      <div class="sec-hdr">
+        <div class="sec-icon">📝</div>
+        <div class="sec-title">Study Log</div>
+        <div class="sec-hdr-line"></div>
+        <button class="btn btn-red btn-sm" onclick="if(confirm('Sab delete karein?')){S.studyLog=[];save();renderAll();}">Clear</button>
+      </div>
+      <div id="studyLogView"></div>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div class="page" id="page-settings">
+      <div class="hero-card" style="margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Profile</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px;" id="settingsName">Student</div>
+        <button class="btn btn-gold btn-sm" onclick="profileModal()">✏️ Edit Profile</button>
+      </div>
+
+      <div class="sec-hdr">
+        <div class="sec-icon">🎯</div>
+        <div class="sec-title">Study Settings</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+
+      <div class="set-item" onclick="setDailyGoal()">
+        <div class="set-icon" style="background:rgba(249,168,37,0.12);">🎯</div>
+        <div class="set-body">
+          <div class="set-title">Daily Study Goal</div>
+          <div class="set-sub" id="setGoalVal">8 ghante (default)</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+      <div class="set-item" onclick="subjectModal()">
+        <div class="set-icon" style="background:rgba(66,165,245,0.12);">📚</div>
+        <div class="set-body">
+          <div class="set-title">Subjects Manage Karein</div>
+          <div class="set-sub" id="setSubCount">0 subjects added</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+      <div class="set-item" onclick="motivationModal()">
+        <div class="set-icon" style="background:rgba(124,77,255,0.12);">💬</div>
+        <div class="set-body">
+          <div class="set-title">Motivational Quote</div>
+          <div class="set-sub">Custom quote set karein</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+
+      <div class="sec-hdr" style="margin-top:8px;">
+        <div class="sec-icon">💾</div>
+        <div class="sec-title">Backup & Restore</div>
+        <div class="sec-hdr-line"></div>
+      </div>
+      <div class="sec-hdr" style="margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--text3);">App band hone par bhi data safe rahega — browser cache use hota hai</div>
+      </div>
+
+      <div class="set-item" onclick="backupData()">
+        <div class="set-icon" style="background:rgba(0,200,83,0.12);">📤</div>
+        <div class="set-body">
+          <div class="set-title">Backup (Download JSON)</div>
+          <div class="set-sub">Apna sara data JSON file mein save karein</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+      <div class="set-item" onclick="document.getElementById('restoreFile').click()">
+        <div class="set-icon" style="background:rgba(66,165,245,0.12);">📥</div>
+        <div class="set-body">
+          <div class="set-title">Restore (Upload JSON)</div>
+          <div class="set-sub">Purana data wapas laayein</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+      <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(event)">
+
+      <div class="set-item" onclick="exportText()">
+        <div class="set-icon" style="background:rgba(255,109,0,0.12);">📋</div>
+        <div class="set-body">
+          <div class="set-title">Text Export (Copy/Share)</div>
+          <div class="set-sub">Aaj ka schedule text mein copy karein</div>
+        </div>
+        <div class="set-arrow">›</div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="set-item" style="cursor:default;" onclick="">
+        <div class="set-icon" style="background:rgba(255,82,82,0.12);">🗑</div>
+        <div class="set-body">
+          <div class="set-title">Reset All Data</div>
+          <div class="set-sub">Sab kuch delete ho jayega</div>
+        </div>
+        <button class="btn btn-red btn-sm" onclick="event.stopPropagation();resetAllData()">Reset</button>
+      </div>
+
+      <div style="text-align:center;padding:20px 0 8px;">
+        <div style="font-family:var(--font2);font-weight:800;font-size:14px;color:var(--gold);">CSC Campus</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">Selection Shuru Hota Hai Yahan Se!</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px;">Near Ursuline School, Rangbhumi Dhalai Road, Purnea • 7488664125</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="navbar">
+    <button class="nav-btn active" onclick="navigate('home',this)" id="nb-home">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+    </button>
+    <button class="nav-btn" onclick="navigate('schedule',this)" id="nb-schedule">
+      <div class="nav-icon">📅</div>
+      <div class="nav-label">Schedule</div>
+    </button>
+    <button class="nav-btn" onclick="navigate('tasks',this)" id="nb-tasks">
+      <div class="nav-icon">✅</div>
+      <div class="nav-label">Tasks</div>
+    </button>
+    <button class="nav-btn" onclick="navigate('progress',this)" id="nb-progress">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Progress</div>
+    </button>
+    <button class="nav-btn" onclick="navigate('settings',this)" id="nb-settings">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">Settings</div>
+    </button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox">
+    <div class="modal-handle"></div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const DAYS = ['Ravivaar','Somvaar','Mangalvaar','Budhvaar','Guruvar','Shukravaar','Shanivaar'];
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const COLORS = ['gold','blue','green','purple','red'];
+const SLOT_COLORS = {gold:'var(--gold)',blue:'var(--blue3)',green:'var(--green)',purple:'var(--purple)',red:'var(--red)'};
+const QUOTES = [
+  "Discipline aaj, Selection kal!",
+  "Har sawaal ek mauka hai aage badhne ka.",
+  "Mehnat kabhi bekar nahi jaati.",
+  "Chhoti mehnat, bada sapna — dono zaroori hain.",
+  "Aaj ka struggle, kal ki strength.",
+  "Roz ek step aage badho — selection door nahi.",
+  "Jo padhai karta hai, woh jeetta hai.",
+  "Smart work + Hard work = Selection guaranteed.",
+];
+
+let S = {
+  name: 'Student',
+  exam: 'SSC CGL',
+  target: '2025',
+  dailyGoal: 8,
+  quote: '',
+  subjects: [
+    {id:1,name:'Maths',icon:'🔢',color:'blue'},
+    {id:2,name:'Reasoning',icon:'🧠',color:'purple'},
+    {id:3,name:'General Studies',icon:'📖',color:'green'},
+    {id:4,name:'English',icon:'✍️',color:'gold'},
+  ],
+  schedule: [],
+  tasks: [],
+  studyLog: [],
+  activeDay: new Date().getDay(),
+  taskFilter: 'all',
+};
+
+const KEY = 'csc_app_v2';
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+}
+function load() {
+  try {
+    const d = localStorage.getItem(KEY);
+    if (d) { const p = JSON.parse(d); S = {...S,...p}; }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('liveClock').textContent = `${h}:${m}`;
+  const days = ['Ravivaar','Somvaar','Mangalvaar','Budhvaar','Guruvar','Shukravaar','Shanivaar'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('liveDate').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATE
+// ═══════════════════════════════════════════════════
+function navigate(tab, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-'+tab);
+  if (page) { page.classList.add('active'); }
+  if (btn) btn.classList.add('active');
+  renderPage(tab);
+}
+
+function renderPage(tab) {
+  if (tab==='home') renderHome();
+  if (tab==='schedule') renderSchedule();
+  if (tab==='tasks') renderTasks();
+  if (tab==='progress') renderProgress();
+  if (tab==='settings') renderSettings();
+}
+
+function renderAll() {
+  renderHome();
+  renderTasks();
+  renderProgress();
+  renderSettings();
+}
+
+// ═══════════════════════════════════════════════════
+//  HOME
+// ═══════════════════════════════════════════════════
+function renderHome() {
+  document.getElementById('heroName').textContent = S.name;
+  document.getElementById('heroBadge').textContent = S.exam;
+  document.getElementById('heroExam').textContent = 'Target: '+S.target;
+  document.getElementById('heroQuote').textContent =
+    '"' + (S.quote || QUOTES[new Date().getDate() % QUOTES.length]) + '"';
+
+  // Stats
+  const today = dateStr(new Date());
+  const todaySecs = S.studyLog.filter(l=>l.date===today).reduce((a,l)=>a+l.secs,0);
+  document.getElementById('todayHrs').textContent = secsToHr(todaySecs);
+
+  const weekSecs = getWeekLogs().reduce((a,l)=>a+l.secs,0);
+  document.getElementById('weekHrs').textContent = secsToHr(weekSecs);
+
+  // Streak
+  const streak = calcStreak();
+  document.getElementById('streakCount').textContent = streak + ' 🔥';
+  renderWeekStreak();
+
+  // Today's tasks
+  const todayTasks = S.tasks.filter(t=>t.date===today).slice(0,4);
+  const ht = document.getElementById('homeTasks');
+  if (!todayTasks.length) {
+    ht.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Aaj ke liye koi task nahi. Add karein!</div></div>`;
+  } else {
+    ht.innerHTML = todayTasks.map(t => renderTaskHTML(t, true)).join('');
+  }
+
+  // Subjects select
+  const sel = document.getElementById('timerSubjectSelect');
+  sel.innerHTML = '<option value="">-- Subject Select Karein --</option>' +
+    S.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('');
+}
+
+function renderWeekStreak() {
+  const el = document.getElementById('weekStreak');
+  const today = new Date();
+  const dots = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const ds = dateStr(d);
+    const hasLog = S.studyLog.some(l=>l.date===ds && l.secs>0);
+    const isToday = i===0;
+    dots.push(`<div class="streak-dot ${isToday?'today':hasLog?'done':''}">${DAYS_SHORT[d.getDay()]}</div>`);
+  }
+  el.innerHTML = dots.join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  SCHEDULE
+// ═══════════════════════════════════════════════════
+let activeDay = new Date().getDay();
+
+function renderSchedule() {
+  // Day tabs
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = DAYS.map((d,i)=>
+    `<button class="week-tab ${i===activeDay?'active':''}" onclick="setActiveDay(${i})">${DAYS_SHORT[i]}</button>`
+  ).join('');
+  renderSlots();
+}
+
+function setActiveDay(d) {
+  activeDay = d;
+  renderSchedule();
+}
+
+function renderSlots() {
+  const sv = document.getElementById('scheduleView');
+  const daySlots = S.schedule.filter(s=>s.day===activeDay).sort((a,b)=>a.time.localeCompare(b.time));
+  if (!daySlots.length) {
+    sv.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">${DAYS[activeDay]} ke liye koi slot nahi.<br>Upar "+ Add" karein.</div></div>`;
+    return;
+  }
+  sv.innerHTML = `<div class="tt-grid">` +
+    daySlots.map(slot=>{
+      const subj = S.subjects.find(s=>s.id===slot.subjectId);
+      return `<div class="tt-time">${slot.time}</div>
+      <div class="tt-slot">
+        <div class="tt-item ${slot.color||'gold'}" onclick="editSlot('${slot.id}')">
+          <div class="tt-name">${subj?subj.icon+' ':''}<b>${slot.title}</b></div>
+          <div class="tt-sub">${slot.duration}min${slot.note?' • '+slot.note:''}</div>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+function addSlotModal(editId) {
+  const slot = editId ? S.schedule.find(s=>s.id===editId) : null;
+  const subOpts = S.subjects.map(s=>`<option value="${s.id}" ${slot&&slot.subjectId===s.id?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+  const colorOpts = COLORS.map(c=>`<option value="${c}" ${slot&&slot.color===c||(!slot&&c==='gold')?'selected':''}>${c}</option>`).join('');
+  modalShow(`<div class="modal-title">${slot?'✏️ Slot Edit Karein':'➕ Naya Slot Add Karein'}</div>
+    <div class="inp-group"><div class="inp-label">Title *</div>
+      <input class="inp" id="slTitle" placeholder="e.g. Maths Practice" value="${slot?slot.title:''}"></div>
+    <div class="inp-group"><div class="inp-label">Time *</div>
+      <input class="inp" type="time" id="slTime" value="${slot?slot.time:'09:00'}"></div>
+    <div class="inp-group"><div class="inp-label">Duration (minutes)</div>
+      <input class="inp" type="number" id="slDur" placeholder="60" value="${slot?slot.duration:60}"></div>
+    <div class="inp-group"><div class="inp-label">Subject</div>
+      <select class="inp" id="slSubj"><option value="">-- Select --</option>${subOpts}</select></div>
+    <div class="inp-group"><div class="inp-label">Color</div>
+      <select class="inp" id="slColor">${colorOpts}</select></div>
+    <div class="inp-group"><div class="inp-label">Note (optional)</div>
+      <input class="inp" id="slNote" placeholder="Note..." value="${slot?slot.note||'':''}"></div>
+    <div class="row-btns">
+      <button class="btn btn-gold btn-full" onclick="saveSlot('${editId||''}')">💾 Save</button>
+      ${slot?`<button class="btn btn-red btn-sm" onclick="deleteSlot('${editId}')">🗑</button>`:''}
+    </div>`);
+}
+
+function editSlot(id) { addSlotModal(id); }
+
+function saveSlot(editId) {
+  const title = document.getElementById('slTitle').value.trim();
+  const time = document.getElementById('slTime').value;
+  if (!title || !time) { toast('Title aur Time zaroori hai!','error'); return; }
+  if (editId) {
+    const i = S.schedule.findIndex(s=>s.id===editId);
+    if (i>=0) { S.schedule[i] = {...S.schedule[i], title, time, duration:+document.getElementById('slDur').value||60, subjectId:+document.getElementById('slSubj').value||null, color:document.getElementById('slColor').value, note:document.getElementById('slNote').value.trim(), day:activeDay}; }
+  } else {
+    S.schedule.push({id:uid(),day:activeDay,title,time,duration:+document.getElementById('slDur').value||60,subjectId:+document.getElementById('slSubj').value||null,color:document.getElementById('slColor').value,note:document.getElementById('slNote').value.trim()});
+  }
+  save(); closeModal(); renderSchedule(); toast('Slot save ho gaya! ✅','success');
+}
+
+function deleteSlot(id) {
+  if (!confirm('Yeh slot delete karein?')) return;
+  S.schedule = S.schedule.filter(s=>s.id!==id);
+  save(); closeModal(); renderSchedule(); toast('Slot delete hua 🗑');
+}
+
+// ═══════════════════════════════════════════════════
+//  TASKS
+// ═══════════════════════════════════════════════════
+let taskFilter = 'all';
+
+function renderTasks() {
+  const today = dateStr(new Date());
+  let tasks = [...S.tasks].sort((a,b)=>{
+    const pri = {high:0,medium:1,low:2};
+    if ((pri[a.priority]||1) !== (pri[b.priority]||1)) return (pri[a.priority]||1)-(pri[b.priority]||1);
+    return a.done===b.done ? 0 : a.done ? 1 : -1;
+  });
+  if (taskFilter==='pending') tasks = tasks.filter(t=>!t.done);
+  if (taskFilter==='done') tasks = tasks.filter(t=>t.done);
+  if (taskFilter==='high') tasks = tasks.filter(t=>t.priority==='high');
+  // show today + upcoming
+  const tv = document.getElementById('tasksView');
+  const todayT = tasks.filter(t=>t.date===today);
+  const upcomingT = tasks.filter(t=>t.date>today).slice(0,5);
+  const pastT = tasks.filter(t=>t.date<today&&!t.done).slice(0,5);
+  let html = '';
+  if (pastT.length && taskFilter==='all') {
+    html += `<div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:6px;">⚠️ OVERDUE (${pastT.length})</div>`;
+    html += pastT.map(t=>renderTaskHTML(t)).join('');
+    html += '<div class="divider"></div>';
+  }
+  if (todayT.length || taskFilter==='all') {
+    if (taskFilter==='all') html += `<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px;">📌 AAJ KE TASKS</div>`;
+    html += todayT.map(t=>renderTaskHTML(t)).join('');
+  }
+  if (!todayT.length && taskFilter==='all') {
+    html += `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Aaj ke liye koi task nahi!</div></div>`;
+  }
+  if (upcomingT.length && taskFilter==='all') {
+    html += `<div class="divider"></div><div style="font-size:11px;color:var(--blue3);font-weight:700;margin-bottom:6px;">📅 UPCOMING</div>`;
+    html += upcomingT.map(t=>renderTaskHTML(t)).join('');
+  }
+  tv.innerHTML = html || `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">Koi task nahi!</div></div>`;
+
+  // Subjects chips
+  const sc = document.getElementById('subjectsChips');
+  sc.innerHTML = S.subjects.map(s=>
+    `<span class="badge badge-${s.color||'blue'}" style="cursor:pointer;font-size:12px;padding:6px 12px;" onclick="quickAddTask(${s.id})">${s.icon} ${s.name}</span>`
+  ).join('');
+}
+
+function renderTaskHTML(t, compact=false) {
+  const subj = S.subjects.find(s=>s.id===t.subjectId);
+  const priColor = t.priority==='high'?'var(--red)':t.priority==='low'?'var(--text3)':'var(--gold)';
+  const priIcon = t.priority==='high'?'🔴':t.priority==='low'?'🟢':'🟡';
+  return `<div class="check-wrap ${t.done?'done':''}" onclick="toggleTask('${t.id}')">
+    <div class="custom-check"><span class="check-mark">✓</span></div>
+    <div class="check-body">
+      <div class="check-task">${t.title}</div>
+      <div class="check-meta">
+        ${subj?`<span>${subj.icon} ${subj.name}</span>`:''}
+        <span>${priIcon} ${t.priority||'medium'}</span>
+        ${t.duration?`<span>⏱ ${t.duration}min</span>`:''}
+        ${!compact&&t.date?`<span>📅 ${t.date}</span>`:''}
+      </div>
+    </div>
+    ${compact?'':`<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;flex-shrink:0;" onclick="event.stopPropagation();editTaskModal('${t.id}')">✏️</button>`}
+  </div>`;
+}
+
+function toggleTask(id) {
+  const i = S.tasks.findIndex(t=>t.id===id);
+  if (i>=0) { S.tasks[i].done = !S.tasks[i].done; save(); renderTasks(); renderHome(); renderProgress(); }
+}
+
+function filterTasks(f, btn) {
+  taskFilter = f;
+  document.querySelectorAll('#page-tasks .week-tab').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTasks();
+}
+
+function addTaskModal(editId) {
+  const t = editId ? S.tasks.find(x=>x.id===editId) : null;
+  const today = dateStr(new Date());
+  const subOpts = S.subjects.map(s=>`<option value="${s.id}" ${t&&t.subjectId===s.id?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+  modalShow(`<div class="modal-title">${t?'✏️ Task Edit Karein':'➕ Naya Task Add Karein'}</div>
+    <div class="inp-group"><div class="inp-label">Task Title *</div>
+      <input class="inp" id="tTitle" placeholder="e.g. Percentage chapter practice" value="${t?t.title:''}"></div>
+    <div class="inp-group"><div class="inp-label">Date</div>
+      <input class="inp" type="date" id="tDate" value="${t?t.date:today}"></div>
+    <div class="inp-group"><div class="inp-label">Subject</div>
+      <select class="inp" id="tSubj"><option value="">-- Select --</option>${subOpts}</select></div>
+    <div class="inp-group"><div class="inp-label">Priority</div>
+      <select class="inp" id="tPri">
+        <option value="high" ${t&&t.priority==='high'?'selected':''}>🔴 High</option>
+        <option value="medium" ${!t||t.priority==='medium'?'selected':''}>🟡 Medium</option>
+        <option value="low" ${t&&t.priority==='low'?'selected':''}>🟢 Low</option>
+      </select></div>
+    <div class="inp-group"><div class="inp-label">Duration (minutes, optional)</div>
+      <input class="inp" type="number" id="tDur" placeholder="45" value="${t?t.duration||'':''}"></div>
+    <div class="inp-group"><div class="inp-label">Notes (optional)</div>
+      <input class="inp" id="tNote" placeholder="Koi note..." value="${t?t.note||'':''}"></div>
+    <div class="row-btns">
+      <button class="btn btn-gold btn-full" onclick="saveTask('${editId||''}')">💾 Save</button>
+      ${t?`<button class="btn btn-red btn-sm" onclick="deleteTask('${editId}')">🗑</button>`:''}
+    </div>`);
+}
+
+function editTaskModal(id) { addTaskModal(id); }
+function quickAddTask(subjectId) {
+  addTaskModal();
+  setTimeout(()=>{ const s = document.getElementById('tSubj'); if(s) s.value=subjectId; },100);
+}
+
+function saveTask(editId) {
+  const title = document.getElementById('tTitle').value.trim();
+  if (!title) { toast('Task title zaroori hai!','error'); return; }
+  const data = { title, date:document.getElementById('tDate').value, subjectId:+document.getElementById('tSubj').value||null, priority:document.getElementById('tPri').value, duration:+document.getElementById('tDur').value||0, note:document.getElementById('tNote').value.trim(), done:false };
+  if (editId) {
+    const i = S.tasks.findIndex(t=>t.id===editId);
+    if (i>=0) { S.tasks[i]={...S.tasks[i],...data,done:S.tasks[i].done}; }
+  } else {
+    data.id = uid(); S.tasks.push(data);
+  }
+  save(); closeModal(); renderAll(); toast('Task save ho gaya! ✅','success');
+}
+
+function deleteTask(id) {
+  if (!confirm('Yeh task delete karein?')) return;
+  S.tasks = S.tasks.filter(t=>t.id!==id);
+  save(); closeModal(); renderAll(); toast('Task delete hua 🗑');
+}
+
+// ═══════════════════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════════════════
+function renderProgress() {
+  const today = dateStr(new Date());
+  const weekLogs = getWeekLogs();
+  const weekSecs = weekLogs.reduce((a,l)=>a+l.secs,0);
+  const todaySecs = S.studyLog.filter(l=>l.date===today).reduce((a,l)=>a+l.secs,0);
+  const doneTasks = S.tasks.filter(t=>t.done).length;
+  const streak = calcStreak();
+
+  document.getElementById('pWeekHrs').textContent = secsToHr(weekSecs);
+  document.getElementById('pTaskDone').textContent = doneTasks;
+  document.getElementById('pStreak').textContent = streak+'🔥';
+
+  // Goal
+  const goalSecs = S.dailyGoal * 3600;
+  const pct = goalSecs ? Math.min(100, Math.round(todaySecs/goalSecs*100)) : 0;
+  document.getElementById('goalPct').textContent = pct+'%';
+  document.getElementById('goalBar').style.width = pct+'%';
+  document.getElementById('goalText').textContent =
+    `Aaj ${secsToHr(todaySecs)} padha. Target: ${S.dailyGoal} ghante`;
+
+  // Subject progress
+  const sp = document.getElementById('subjectProgress');
+  if (!S.subjects.length) { sp.innerHTML = '<div class="empty-text">Koi subject nahi</div>'; return; }
+  const maxSecs = Math.max(...S.subjects.map(sub=>S.studyLog.filter(l=>l.subjectId===sub.id).reduce((a,l)=>a+l.secs,0)),1);
+  sp.innerHTML = S.subjects.map(sub=>{
+    const secs = S.studyLog.filter(l=>l.subjectId===sub.id).reduce((a,l)=>a+l.secs,0);
+    const pct = Math.round(secs/maxSecs*100);
+    return `<div class="sub-prog-row">
+      <div class="sub-prog-icon" style="background:rgba(255,255,255,0.05);">${sub.icon}</div>
+      <div class="sub-prog-body">
+        <div class="sub-prog-top">
+          <div class="sub-prog-name">${sub.name}</div>
+          <div class="sub-prog-pct">${secsToHr(secs)}</div>
+        </div>
+        <div class="prog-track prog-${sub.color||'blue'}" style="height:7px;">
+          <div class="prog-bar" style="width:${pct}%;"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Week chart
+  const wc = document.getElementById('weekChart');
+  const today2 = new Date();
+  const maxH = 70;
+  const barData = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(today2); d.setDate(d.getDate()-i);
+    const ds = dateStr(d);
+    const secs = S.studyLog.filter(l=>l.date===ds).reduce((a,l)=>a+l.secs,0);
+    barData.push({day:DAYS_SHORT[d.getDay()],secs,isToday:i===0});
+  }
+  const maxS = Math.max(...barData.map(b=>b.secs),1);
+  wc.innerHTML = barData.map(b=>{
+    const h = Math.round(b.secs/maxS*maxH);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="font-size:9px;color:var(--text3);">${secsToHr(b.secs)}</div>
+      <div style="width:100%;height:${h||3}px;background:${b.isToday?'var(--gold)':'var(--navy4)'};border-radius:4px 4px 0 0;min-height:3px;"></div>
+      <div style="font-size:9px;color:${b.isToday?'var(--gold)':'var(--text3)'};">${b.day}</div>
+    </div>`;
+  }).join('');
+
+  // Log
+  const slv = document.getElementById('studyLogView');
+  const recentLogs = [...S.studyLog].reverse().slice(0,10);
+  if (!recentLogs.length) { slv.innerHTML = `<div class="empty-state"><div class="empty-icon">📓</div><div class="empty-text">Abhi koi study session nahi hua</div></div>`; return; }
+  slv.innerHTML = recentLogs.map(l=>{
+    const subj = S.subjects.find(s=>s.id===l.subjectId);
+    return `<div class="check-wrap" style="cursor:default;">
+      <div style="font-size:20px;">${subj?subj.icon:'📚'}</div>
+      <div class="check-body">
+        <div class="check-task">${subj?subj.name:'Study Session'}</div>
+        <div class="check-meta"><span>⏱ ${secsToHr(l.secs)}</span><span>📅 ${l.date}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════
+function renderSettings() {
+  document.getElementById('settingsName').textContent = `${S.name} — ${S.exam}`;
+  document.getElementById('setGoalVal').textContent = `${S.dailyGoal} ghante per day`;
+  document.getElementById('setSubCount').textContent = `${S.subjects.length} subjects added`;
+}
+
+function profileModal() {
+  modalShow(`<div class="modal-title">👤 Profile Edit Karein</div>
+    <div class="inp-group"><div class="inp-label">Aapka Naam *</div>
+      <input class="inp" id="pName" placeholder="Aapka naam" value="${S.name}"></div>
+    <div class="inp-group"><div class="inp-label">Target Exam</div>
+      <select class="inp" id="pExam">
+        ${['SSC CGL','SSC CHSL','SSC MTS','SSC GD','Bank PO','Bank Clerk','RRB NTPC','RRB Group D','BPSC','Other'].map(e=>`<option value="${e}" ${S.exam===e?'selected':''}>${e}</option>`).join('')}
+      </select></div>
+    <div class="inp-group"><div class="inp-label">Target Year</div>
+      <select class="inp" id="pTarget">
+        ${['2025','2026','2027'].map(y=>`<option value="${y}" ${S.target===y?'selected':''}>${y}</option>`).join('')}
+      </select></div>
+    <button class="btn btn-gold btn-full" onclick="saveProfile()">💾 Save</button>`);
+}
+
+function saveProfile() {
+  const n = document.getElementById('pName').value.trim();
+  if (!n) { toast('Naam zaroori hai!','error'); return; }
+  S.name = n; S.exam = document.getElementById('pExam').value; S.target = document.getElementById('pTarget').value;
+  save(); closeModal(); renderAll(); toast('Profile update ho gayi! ✅','success');
+}
+
+function setDailyGoal() {
+  modalShow(`<div class="modal-title">🎯 Daily Study Goal</div>
+    <div class="inp-group"><div class="inp-label">Kitne ghante per day padhna hai?</div>
+      <input class="inp" type="number" id="gVal" min="1" max="16" value="${S.dailyGoal}"></div>
+    <button class="btn btn-gold btn-full" onclick="saveDailyGoal()">💾 Save</button>`);
+}
+
+function saveDailyGoal() {
+  const v = +document.getElementById('gVal').value;
+  if (!v||v<1||v>16) { toast('1 se 16 ke beech enter karein!','error'); return; }
+  S.dailyGoal = v; save(); closeModal(); renderAll(); toast('Goal set ho gaya! 🎯','success');
+}
+
+function motivationModal() {
+  modalShow(`<div class="modal-title">💬 Custom Quote</div>
+    <div class="inp-group"><div class="inp-label">Apna motivational quote likho</div>
+      <input class="inp" id="qVal" placeholder="${QUOTES[0]}" value="${S.quote}"></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Khali chodne par random quote show hoga.</div>
+    <button class="btn btn-gold btn-full" onclick="saveQuote()">💾 Save</button>`);
+}
+function saveQuote() { S.quote=document.getElementById('qVal').value.trim(); save(); closeModal(); renderHome(); toast('Quote set ho gaya! 💬','success'); }
+
+function subjectModal() {
+  const list = S.subjects.map(s=>
+    `<div class="check-wrap" style="cursor:default;margin-bottom:6px;">
+      <div style="font-size:20px;">${s.icon}</div>
+      <div class="check-body"><div class="check-task">${s.name}</div></div>
+      <button class="btn btn-red btn-sm" onclick="deleteSubject(${s.id})">🗑</button>
+    </div>`
+  ).join('');
+  modalShow(`<div class="modal-title">📚 Subjects Manage Karein</div>
+    ${list||'<div class="empty-text" style="margin-bottom:12px;">Koi subject nahi</div>'}
+    <div class="divider"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">NAYA SUBJECT ADD KAREIN</div>
+    <div class="inp-group"><input class="inp" id="sName" placeholder="Subject name (e.g. Maths)"></div>
+    <div class="inp-group"><input class="inp" id="sIcon" placeholder="Emoji icon (e.g. 🔢)"></div>
+    <div class="inp-group"><select class="inp" id="sColor">
+      <option value="blue">Blue</option><option value="gold">Gold</option>
+      <option value="green">Green</option><option value="purple">Purple</option>
+    </select></div>
+    <button class="btn btn-gold btn-full" onclick="addSubject()">➕ Add Subject</button>`);
+}
+
+function addSubject() {
+  const name = document.getElementById('sName').value.trim();
+  if (!name) { toast('Subject naam zaroori hai!','error'); return; }
+  S.subjects.push({id:Date.now(),name,icon:document.getElementById('sIcon').value||'📘',color:document.getElementById('sColor').value});
+  save(); subjectModal(); renderAll(); toast('Subject add ho gaya! 📚','success');
+}
+
+function deleteSubject(id) {
+  if (!confirm('Yeh subject delete karein?')) return;
+  S.subjects = S.subjects.filter(s=>s.id!==id);
+  save(); subjectModal(); renderAll(); toast('Subject delete hua','success');
+}
+
+// ═══════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════
+let timerInterval = null, timerSecs = 0, timerRunning = false, timerSubjectId = null;
+
+function updateTimerSubject() {
+  const v = document.getElementById('timerSubjectSelect').value;
+  timerSubjectId = v ? +v : null;
+  const subj = S.subjects.find(s=>s.id===timerSubjectId);
+  document.getElementById('timerSubject').textContent = subj ? `${subj.icon} ${subj.name} padh rahe ho` : 'Subject select karein';
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById('timerStartBtn').textContent = '▶ Resume';
+    document.getElementById('timerSaveBtn').style.display = 'inline-flex';
+  } else {
+    timerRunning = true;
+    document.getElementById('timerStartBtn').textContent = '⏸ Pause';
+    document.getElementById('timerSaveBtn').style.display = 'inline-flex';
+    timerInterval = setInterval(()=>{
+      timerSecs++;
+      const h=Math.floor(timerSecs/3600), m=Math.floor((timerSecs%3600)/60), s=timerSecs%60;
+      document.getElementById('timerDisplay').textContent =
+        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false; timerSecs = 0;
+  document.getElementById('timerDisplay').textContent = '00:00:00';
+  document.getElementById('timerStartBtn').textContent = '▶ Start';
+  document.getElementById('timerSaveBtn').style.display = 'none';
+}
+
+function saveStudySession() {
+  if (timerSecs < 60) { toast('Kam se kam 1 minute padho!','error'); return; }
+  S.studyLog.push({ id:uid(), date:dateStr(new Date()), secs:timerSecs, subjectId:timerSubjectId });
+  save(); resetTimer(); renderAll(); toast(`Session save! ${secsToHr(timerSecs)} padha ✅`,'success');
+}
+
+// ═══════════════════════════════════════════════════
+//  BACKUP / RESTORE
+// ═══════════════════════════════════════════════════
+function backupData() {
+  const data = JSON.stringify(S, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `csc_backup_${dateStr(new Date())}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Backup download ho raha hai! 📤','success');
+}
+
+function restoreData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm('Yeh sab purana data replace kar dega. Sure ho?')) return;
+      S = {...S,...data}; save(); renderAll();
+      toast('Data restore ho gaya! 📥','success');
+    } catch(err) { toast('Invalid backup file!','error'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportText() {
+  const today = dateStr(new Date());
+  const todaySlots = S.schedule.filter(s=>s.day===new Date().getDay()).sort((a,b)=>a.time.localeCompare(b.time));
+  const todayTasks = S.tasks.filter(t=>t.date===today);
+  let txt = `📚 CSC Campus — Aaj Ka Schedule\n📅 ${today}\n👤 ${S.name} | 🎯 ${S.exam}\n\n`;
+  if (todaySlots.length) {
+    txt += '⏰ TIMETABLE:\n';
+    todaySlots.forEach(s=>{ const sub=S.subjects.find(x=>x.id===s.subjectId); txt+=`${s.time} — ${s.title}${sub?' ('+sub.name+')':''} — ${s.duration}min\n`; });
+  }
+  if (todayTasks.length) {
+    txt += '\n✅ TASKS:\n';
+    todayTasks.forEach(t=>{ txt+=`${t.done?'[✓]':'[ ]'} ${t.title} (${t.priority})\n`; });
+  }
+  txt += `\n🌟 "${S.quote || QUOTES[0]}"\n📞 7488664125 | CSC Campus, Purnea`;
+  navigator.clipboard ? navigator.clipboard.writeText(txt).then(()=>toast('Text copy ho gaya! 📋','success')) : toast('Copy support nahi is browser mein','error');
+}
+
+function resetAllData() {
+  if (!confirm('SABB DATA DELETE HOGA! Pehle backup le lein. Sure?')) return;
+  if (!confirm('Last chance — really sure?')) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════
+function modalShow(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.className='toast'; }, 3000);
+}
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function uid() { return Math.random().toString(36).slice(2,9)+Date.now().toString(36); }
+function dateStr(d) { return d.toISOString().slice(0,10); }
+function secsToHr(s) {
+  if (s < 60) return s+'s';
+  if (s < 3600) return Math.floor(s/60)+'m';
+  return Math.floor(s/3600)+'h'+(Math.floor((s%3600)/60)?Math.floor((s%3600)/60)+'m':'');
+}
+function getWeekLogs() {
+  const today = new Date();
+  const week = [];
+  for (let i=0;i<7;i++) { const d=new Date(today); d.setDate(d.getDate()-i); week.push(dateStr(d)); }
+  return S.studyLog.filter(l=>week.includes(l.date));
+}
+function calcStreak() {
+  let streak = 0, d = new Date();
+  while (true) {
+    const ds = dateStr(d);
+    if (S.studyLog.some(l=>l.date===ds&&l.secs>300)) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+    if (streak > 365) break;
+  }
+  return streak;
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+load();
+updateClock();
+setInterval(updateClock, 1000);
+renderAll();
+renderSchedule();
+
+// Default day tabs
+activeDay = new Date().getDay();
+</script>
+</body>
+</html>
